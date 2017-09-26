@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Extended library for Monadic React",
   "main": "dist/monadic_react_lib.js",
+  "typings": "dist/monadic_react_lib.d.ts",
+  "typescript": {
+    "definition": "dist/monadic_react_lib.d.ts"
+  },
   "scripts": {
     "pub": "cd src && ../node_modules/.bin/tsc && cd .. && npm publish",
     "be": "cd samples && ../node_modules/.bin/nodemon app.js",
