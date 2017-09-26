@@ -56,7 +56,7 @@ let logout = function <U, R>(logoutApi: (loginData: LoginData<R>) => C<void>, me
         ])
 }
 
-let Authenticate = function <U, R>(loginApi: (loginData: LoginData<R>) => C<Option<U>>, logoutApi: (loginData: LoginData<R>) => C<void>, resetApi: (loginData: LoginData<R>) => C<ResetPasswordResult>, messageHandler: (message: string) => void) {
+export let Authenticate = function <U, R>(loginApi: (loginData: LoginData<R>) => C<Option<U>>, logoutApi: (loginData: LoginData<R>) => C<void>, resetApi: (loginData: LoginData<R>) => C<ResetPasswordResult>, messageHandler: (message: string) => void) {
     return (role_to_string: (role: R) => string) => (roles: R[]) => (authState: AuthState<U, R>): C<Option<U>> =>
         repeat<AuthState<U, R>>()(
             any<AuthState<U, R>, AuthState<U, R>>()([
