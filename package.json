@@ -2,7 +2,7 @@
   "name": "monadic_react_lib",
   "version": "1.0.0",
   "description": "Extended library for Monadic React",
-  "main": "dist/index.js",
+  "main": "dist/monadic_react_lib.js",
   "scripts": {
     "pub": "cd src && ../node_modules/.bin/tsc && cd .. && npm publish",
     "be": "cd samples && ../node_modules/.bin/nodemon app.js",
@@ -10,7 +10,18 @@
     "css": "./node_modules/.bin/gulp"
   },
   "dependencies": {
-    "monadic_react": "^1.0.59"
+    "monadic_react": "^1.0.59",
+    "awesome-typescript-loader": "3.1.2",
+    "babel-core": "6.22.1",
+    "babel-loader": "6.2.10",
+    "babel-plugin-transform-runtime": "6.22.0",
+    "babel-polyfill": "6.22.0",
+    "babel-preset-es2015": "6.22.0",
+    "babel-preset-react": "6.22.0",
+    "babel-preset-stage-0": "6.22.0",
+    "babelify": "7.3.0",
+    "typescript": "^2.4.2",
+    "webpack": "2.3.2"
   },
   "author": "Giuseppe Maggiore",
   "license": "MIT"
