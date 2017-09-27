@@ -3,7 +3,7 @@ import { a, any, button, C, div, label, none, Option, repeat, retract, selector,
 export type LoginData<R> = { email: string, password: string, role: R }
 export type ResetPasswordData<R> = { email: string, role: R }
 export type ResetPasswordResult = "success" | "failure"
-export type AuthState<U, R> = { kind: "login" | "requestreset" | "logout", loginState: LoginData<R>, resetState: ResetPasswordData<R>, user: Option<U> }
+export type AuthState<U, R> = { kind: "login" | "requestreset" | "logout", loginState: LoginData<R>, user: Option<U> }
 
 let inner_login = function <U, R>(role_to_string: (role: R) => string) : (roles: R[]) => (show_password: boolean) => (_: AuthState<U, R>) => C<AuthState<U, R>> {
     return (roles: R[]) => (show_password: boolean) =>
