@@ -70,7 +70,13 @@ let resetPassword = function <U, R>(resetApi: (resetData: ResetData<R>) => C<Api
             inner_resetPassword<U, R>(role_to_string)(roles),
             ld => button<AuthState<U, R>>("Change password", false, "reset_button")(ld).then(undefined, ld =>
                     resetApi(ld.resetState).then(undefined, result => {
-                        result == "failure" ? messageHandler("reset_failed") : ""
+                        if (result == "failure") {
+                            messageHandler("reset_failed")
+
+                            return unit<AuthState<U, R>>({...ld, kind: "reset"})
+                        }
+
+                        messageHandler("reset_success")
                         return unit<AuthState<U, R>>({...ld, kind: "login"})
                     })),
         ])
