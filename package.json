@@ -9,9 +9,7 @@
   },
   "scripts": {
     "pub": "cd src && ../node_modules/.bin/tsc && cd .. && npm publish",
-    "be": "cd samples && ../node_modules/.bin/nodemon app.js",
-    "fe": "./node_modules/.bin/webpack -w",
-    "css": "./node_modules/.bin/gulp"
+    "build": "tsc"
   },
   "dependencies": {
     "monadic_react": "^1.0.59"
