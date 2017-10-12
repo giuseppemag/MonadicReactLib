@@ -92,12 +92,12 @@ let changePassword = function <U, R>(changeApi: (changeData: ChangeData) => C<Ap
                 return button<AuthState<U, R>>("Change password", false, "reset_button")(authS).then(undefined, authS =>
                     changeApi(changeData).then(undefined, result => {
                         if (result == "failure") {
-                            messageHandler("reset_failed")
+                            messageHandler("change_password_failed")
 
                             return unit<AuthState<U, R>>({...authS, kind: "changepassword"})
                         }
 
-                        messageHandler("reset_success")
+                        messageHandler("change_password_success")
                         return unit<AuthState<U, R>>({...authS, kind: "loggedin"})
                     })
                 )
