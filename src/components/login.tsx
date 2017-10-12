@@ -3,8 +3,9 @@ import { a, any, button, C, div, label, none, Option, repeat, retract, selector,
 export type LoginData<R> = { email: string, password: string, role: R }
 export type ResetData<R> = { new_password: string, new_password_confirm: string, role: R, token: string }
 export type RegisterData<R> = { username: string, email: string, emailConfirmation: string, password: string, passwordConfirmation: string, role: R}
+export type ChangeData = { password: string, newPassword: string, newPasswordConfirmation: string }
 export type ApiResult = "success" | "failure"
-export type AuthState<U, R> = { kind: "login" | "requestreset" | "reset" | "register" | "logout", loginState: LoginData<R>, resetState: ResetData<R>, registerState: RegisterData<R>, user: Option<U> }
+export type AuthState<U, R> = { kind: "login" | "requestreset" | "reset" | "register" | "changepassword" | "loggedin", loginState: LoginData<R>, resetState: ResetData<R>, registerState: RegisterData<R>, user: Option<U> }
 export type AuthResult<U, R> = {role: R, user: Option<U>}
 
 let login = function <U, R>(loginApi: (loginData: LoginData<R>) => C<Option<U>>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>>{
@@ -16,7 +17,8 @@ let login = function <U, R>(loginApi: (loginData: LoginData<R>) => C<Option<U>>,
                         u.kind == "none" ? messageHandler("login_failed") : ""
                         return unit<AuthState<U, R>>({...ld, user: u})
                     })),
-            ld => a<AuthState<U, R>>("Forgot password?", null, null, false,  "forgot_password")({ ...ld, kind: "requestreset"})
+            ld => a<AuthState<U, R>>("Forgot password?", null, null, false,  "forgot_password")({ ...ld, kind: "requestreset"}),
+            ld => a<AuthState<U, R>>("Create an account", null, null, false,  "register")({ ...ld, kind: "register"})
         ])
 }
 
@@ -57,16 +59,16 @@ let resetPassword = function <U, R>(resetApi: (resetData: ResetData<R>) => C<Api
         any<AuthState<U, R>, AuthState<U, R>>('reset_form')([
             inner_resetPassword<U, R>(role_to_string)(roles),
             ld => button<AuthState<U, R>>("Change password", false, "reset_button")(ld).then(undefined, ld =>
-                    resetApi(ld.resetState).then(undefined, result => {
-                        if (result == "failure") {
-                            messageHandler("reset_failed")
+                resetApi(ld.resetState).then(undefined, result => {
+                    if (result == "failure") {
+                        messageHandler("reset_failed")
 
-                            return unit<AuthState<U, R>>({...ld, kind: "reset"})
-                        }
+                        return unit<AuthState<U, R>>({...ld, kind: "reset"})
+                    }
 
-                        messageHandler("reset_success")
-                        return unit<AuthState<U, R>>({...ld, kind: "login"})
-                    })),
+                    messageHandler("reset_success")
+                    return unit<AuthState<U, R>>({...ld, kind: "login"})
+                })),
         ])
 }
 
@@ -83,9 +85,45 @@ let inner_resetPassword = function <U, R>(role_to_string: (role: R) => string) :
         )
 }
 
-let logout = function <U, R>(logoutApi: (loginData: LoginData<R>) => C<void>, messageHandler: (message: string) => void) : (_: AuthState<U, R>) => C<AuthState<U, R>> {
+let changePassword = function <U, R>(changeApi: (changeData: ChangeData) => C<ApiResult>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (_: AuthState<U, R>) => C<AuthState<U, R>>{
+    return (role_to_string: (role: R) => string) =>
+        any<AuthState<U, R>, AuthState<U, R>>('reset_form')([
+            authS => inner_changePassword<R>(role_to_string)({password: "", newPassword: "", newPasswordConfirmation: ""}).then(undefined, changeData => {
+                return button<AuthState<U, R>>("Change password", false, "reset_button")(authS).then(undefined, authS =>
+                    changeApi(changeData).then(undefined, result => {
+                        if (result == "failure") {
+                            messageHandler("reset_failed")
+
+                            return unit<AuthState<U, R>>({...authS, kind: "changepassword"})
+                        }
+
+                        messageHandler("reset_success")
+                        return unit<AuthState<U, R>>({...authS, kind: "loggedin"})
+                    })
+                )
+            })
+        ])
+}
+
+let inner_changePassword = function <R>(role_to_string: (role: R) => string) : (_: ChangeData) => C<ChangeData> {
+    return repeat<ChangeData>("inner_change-repeat")(
+            any<ChangeData, ChangeData>("inner_change-any")([
+                retract<ChangeData, string>("old_password_retract")(changeData => changeData.password, changeData => v => ({ ...changeData, password: v}),
+                    label<string, string>("Old Password", true, null, "old_password_label")(string("edit", "password", "old_password_input"))),
+
+                retract<ChangeData, string>("new_password_retract")(changeData => changeData.newPassword, changeData => v => ({ ...changeData, newPassword: v}),
+                    label<string, string>("New Password", true, null, "new_password_label")(string("edit", "password", "new_password_input"))),
+
+                retract<ChangeData, string>("new_password_confirm_retract")(changeData => changeData.newPasswordConfirmation, changeData => v => ({ ...changeData, newPasswordConfirmation: v}),
+                    label<string, string>("Confirm password", true, null, "new_password_confirm_label")(string("edit", "password", "new_password_confirm_input"))),
+            ])
+        )
+}
+
+let loggedin = function <U, R>(logoutApi: (loginData: LoginData<R>) => C<void>, messageHandler: (message: string) => void) : (_: AuthState<U, R>) => C<AuthState<U, R>> {
     return any<AuthState<U, R>, AuthState<U, R>>('logout_form')([
-        ld => button<AuthState<U, R>>("Logout", false, "logout_button")(ld).then(undefined, ld => logoutApi(ld.loginState)).then(undefined, _ => unit<AuthState<U, R>>({...ld, kind: "login"}))
+        ld => a<AuthState<U, R>>("Logout", null, "nofollow", false, "logout_link")(ld).then("logout_api_call", ld => logoutApi(ld.loginState)).then(undefined, _ => unit<AuthState<U, R>>({...ld, kind: "login", user: none()})),
+        ld => a<AuthState<U, R>>("Change password", null, "nofollow", false, "change_password_link")(ld).then("change_password_kind", _ => unit<AuthState<U, R>>({...ld, kind: "changepassword"}))        
     ])
 }
 
@@ -132,20 +170,22 @@ let inner_register = function <U, R>(role_to_string: (role: R) => string) : (rol
         )
 }
 
-export let Authenticate = function <U, R>(loginApi: (loginData: LoginData<R>) => C<Option<U>>, logoutApi: (loginData: LoginData<R>) => C<void>, registerApi: (registerData: RegisterData<R>) => C<ApiResult>, requestResetApi: (loginData: LoginData<R>) => C<ApiResult>, resetApi: (resetData: ResetData<R>) => C<ApiResult>, messageHandler: (message: string) => void) {
+export let Authenticate = function <U, R>(loginApi: (loginData: LoginData<R>) => C<Option<U>>, logoutApi: (loginData: LoginData<R>) => C<void>, registerApi: (registerData: RegisterData<R>) => C<ApiResult>, requestResetApi: (loginData: LoginData<R>) => C<ApiResult>, resetApi: (resetData: ResetData<R>) => C<ApiResult>, changeApi: (changeData: ChangeData) => C<ApiResult>, messageHandler: (message: string) => void) {
     return (role_to_string: (role: R) => string) => (roles: R[]) => (authState: AuthState<U, R>): C<AuthResult<U, R>> =>
         repeat<AuthState<U, R>>('authenticate')(
             any<AuthState<U, R>, AuthState<U, R>>('authenticate_wrapper')([
                 ld =>
                     ld.kind == "login" ?
                         login<U, R>(loginApi, messageHandler)(role_to_string)(roles)(ld)
-                    : ld.kind == "logout" ?
-                        logout<U, R>(logoutApi, messageHandler)(ld)
+                    : ld.kind == "loggedin" ?
+                        loggedin<U, R>(logoutApi, messageHandler)(ld)
                     : ld.kind == "requestreset" ?
                         resetPasswordRequest<U, R>(requestResetApi, messageHandler)(role_to_string)(roles)(ld)
                     : ld.kind == "reset" ? 
                         resetPassword<U, R>(resetApi, messageHandler)(role_to_string)(roles)(ld)
+                    : ld.kind == "changepassword" ? 
+                        changePassword<U, R>(changeApi, messageHandler)(role_to_string)(ld)
                     : register<U, R>(registerApi, messageHandler)(role_to_string)(roles)(ld)
             ])
-        )(authState).filter(s => s.kind != "requestreset" && s.kind != "logout").map((f) => {return {role: f.loginState.role, user: f.user}})
+        )(authState).filter(s => s.kind != "requestreset" && s.kind != "loggedin").map((f) => {return {role: f.loginState.role, user: f.user}})
 }

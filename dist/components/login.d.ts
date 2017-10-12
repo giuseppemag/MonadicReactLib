@@ -18,9 +18,14 @@ export declare type RegisterData<R> = {
     passwordConfirmation: string;
     role: R;
 };
+export declare type ChangeData = {
+    password: string;
+    newPassword: string;
+    newPasswordConfirmation: string;
+};
 export declare type ApiResult = "success" | "failure";
 export declare type AuthState<U, R> = {
-    kind: "login" | "requestreset" | "reset" | "register" | "logout";
+    kind: "login" | "requestreset" | "reset" | "register" | "changepassword" | "loggedin";
     loginState: LoginData<R>;
     resetState: ResetData<R>;
     registerState: RegisterData<R>;
@@ -30,4 +35,4 @@ export declare type AuthResult<U, R> = {
     role: R;
     user: Option<U>;
 };
-export declare let Authenticate: <U, R>(loginApi: (loginData: LoginData<R>) => C<Option<U>>, logoutApi: (loginData: LoginData<R>) => C<void>, registerApi: (registerData: RegisterData<R>) => C<ApiResult>, requestResetApi: (loginData: LoginData<R>) => C<ApiResult>, resetApi: (resetData: ResetData<R>) => C<ApiResult>, messageHandler: (message: string) => void) => (role_to_string: (role: R) => string) => (roles: R[]) => (authState: AuthState<U, R>) => C<AuthResult<U, R>>;
+export declare let Authenticate: <U, R>(loginApi: (loginData: LoginData<R>) => C<Option<U>>, logoutApi: (loginData: LoginData<R>) => C<void>, registerApi: (registerData: RegisterData<R>) => C<ApiResult>, requestResetApi: (loginData: LoginData<R>) => C<ApiResult>, resetApi: (resetData: ResetData<R>) => C<ApiResult>, changeApi: (changeData: ChangeData) => C<ApiResult>, messageHandler: (message: string) => void) => (role_to_string: (role: R) => string) => (roles: R[]) => (authState: AuthState<U, R>) => C<AuthResult<U, R>>;
