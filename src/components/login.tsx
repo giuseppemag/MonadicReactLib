@@ -88,7 +88,7 @@ let inner_resetPassword = function <U, R>(role_to_string: (role: R) => string) :
 let changePassword = function <U, R>(changeApi: (changeData: ChangeData) => C<ApiResult>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (_: AuthState<U, R>) => C<AuthState<U, R>>{
     return (role_to_string: (role: R) => string) =>
         any<AuthState<U, R>, AuthState<U, R>>('reset_form')([
-            authS => inner_changePassword<R>(role_to_string)({password: "", newPassword: "", newPasswordConfirmation: ""}).then(undefined, changeData => {
+            authS => inner_changePassword()({password: "", newPassword: "", newPasswordConfirmation: ""}).then(undefined, changeData => {
                 return button<AuthState<U, R>>("Change password", false, "reset_button")(authS).then(undefined, authS =>
                     changeApi(changeData).then(undefined, result => {
                         if (result == "failure") {
@@ -105,7 +105,7 @@ let changePassword = function <U, R>(changeApi: (changeData: ChangeData) => C<Ap
         ])
 }
 
-let inner_changePassword = function <R>(role_to_string: (role: R) => string) : (_: ChangeData) => C<ChangeData> {
+let inner_changePassword = function () : (_: ChangeData) => C<ChangeData> {
     return repeat<ChangeData>("inner_change-repeat")(
             any<ChangeData, ChangeData>("inner_change-any")([
                 retract<ChangeData, string>("old_password_retract")(changeData => changeData.password, changeData => v => ({ ...changeData, password: v}),
