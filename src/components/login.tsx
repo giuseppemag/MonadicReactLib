@@ -141,7 +141,8 @@ let register = function <U, R>(registerApi: (registerData: RegisterData<R>) => C
 
                         messageHandler("register_success")
                         return unit<AuthState<U, R>>({...ld, kind: "login"})
-                    }))
+                    })),
+            ld => a<AuthState<U, R>>("Back to login", null, null, false, "back_to_login")({ ...ld, kind: "login"})                    
         ])
 }
 
