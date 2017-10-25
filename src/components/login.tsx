@@ -17,8 +17,8 @@ let login = function <U, R>(loginApi: (loginData: LoginData<R>) => C<Option<U>>,
                         u.kind == "none" ? messageHandler("login_failed") : ""
                         return unit<AuthState<U, R>>({...ld, user: u})
                     })),
-            ld => a<AuthState<U, R>>("Forgot password?", null, null, false,  "forgot_password")({ ...ld, kind: "requestreset"}),
-            ld => a<AuthState<U, R>>("Create an account", null, null, false,  "register")({ ...ld, kind: "register"})
+            ld => ld.resetState != null ? a<AuthState<U, R>>("Forgot password?", null, null, false,  "forgot_password")({ ...ld, kind: "requestreset"}) : unit<AuthState<U, R>>(null).never(),
+            ld => ld.registerState != null ? a<AuthState<U, R>>("Create an account", null, null, false,  "register")({ ...ld, kind: "register"}) : unit<AuthState<U, R>>(null).never()
         ])
 }
 
