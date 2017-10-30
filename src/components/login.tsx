@@ -10,7 +10,7 @@ export type AuthResult<U, R> = {role: R, user: Option<U>}
 
 let login = function <U, R>(loginApi: (loginData: LoginData<R>) => C<Option<U>>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>>{
     return (role_to_string: (role: R) => string) => (roles: R[]) => initAuthState =>
-        repeat<AuthState<U, R>>()(
+        repeat<AuthState<U, R>>('login_repeat')(
             any<AuthState<U, R>, AuthState<U, R>>('login_form')([
                 inner_login<U, R>(role_to_string)(roles)(true),
                 ld => button<AuthState<U, R>>("Login", false, "login_button")(ld).then(undefined, ld =>
@@ -25,7 +25,7 @@ let login = function <U, R>(loginApi: (loginData: LoginData<R>) => C<Option<U>>,
                 ld => ld.resetState != null ? a<AuthState<U, R>>("Forgot password?", null, null, false,  "forgot_password")({ ...ld, kind: "requestreset"}) : unit<AuthState<U, R>>(null).never(),
                 ld => ld.registerState != null ? a<AuthState<U, R>>("Create an account", null, null, false,  "register")({ ...ld, kind: "register"}) : unit<AuthState<U, R>>(null).never()
             ])
-        )(initAuthState).filter((newState) => initAuthState.kind != newState.kind)
+        )(initAuthState).filter((newState) => initAuthState.kind != newState.kind, 'login_filter')
 }
 
 let inner_login = function <U, R>(role_to_string: (role: R) => string) : (roles: R[]) => (show_password: boolean) => (_: AuthState<U, R>) => C<AuthState<U, R>> {
@@ -48,7 +48,7 @@ let inner_login = function <U, R>(role_to_string: (role: R) => string) : (roles:
 
 let resetPasswordRequest = function <U, R>(requestResetApi: (loginData: LoginData<R>) => C<ApiResult>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (roles: R[]) => (_: AuthState<U, R>)  => C<AuthState<U, R>>{
     return (role_to_string: (role: R) => string) => (roles: R[]) => initAuthState =>
-        repeat<AuthState<U, R>>()(
+        repeat<AuthState<U, R>>('requestreset_repeat')(
             any<AuthState<U, R>, AuthState<U, R>>('requestreset_form')([
                 inner_login<U, R>(role_to_string)(roles)(false),
                 ld => button<AuthState<U, R>>("Request reset", false, "request_reset_button")(ld).then(undefined, ld =>
@@ -59,12 +59,12 @@ let resetPasswordRequest = function <U, R>(requestResetApi: (loginData: LoginDat
                 ),
                 ld => a<AuthState<U, R>>("Back to login", null, null, false, "back_to_login")({ ...ld, kind: "login"})
             ])
-        )(initAuthState).filter((newState) => initAuthState.kind != newState.kind)
+        )(initAuthState).filter((newState) => initAuthState.kind != newState.kind, 'resetpasswordrequest_filter')
     }
 
 let resetPassword = function <U, R>(resetApi: (resetData: ResetData<R>) => C<ApiResult>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>>{
     return (role_to_string: (role: R) => string) => (roles: R[]) => initAuthState =>
-        repeat<AuthState<U, R>>()(
+        repeat<AuthState<U, R>>('resetpassword_repeat')(
             any<AuthState<U, R>, AuthState<U, R>>('reset_form')([
                 inner_resetPassword<U, R>(role_to_string)(roles),
                 ld => button<AuthState<U, R>>("Change password", false, "reset_button")(ld).then(undefined, ld =>
@@ -79,7 +79,7 @@ let resetPassword = function <U, R>(resetApi: (resetData: ResetData<R>) => C<Api
                         return unit<AuthState<U, R>>({...ld, kind: "login"})
                     })),
             ])
-        )(initAuthState).filter((newState) => initAuthState.kind != newState.kind)
+        )(initAuthState).filter((newState) => initAuthState.kind != newState.kind, 'resetpassword_filter')
     }
 
 let inner_resetPassword = function <U, R>(role_to_string: (role: R) => string) : (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>> {
@@ -97,7 +97,7 @@ let inner_resetPassword = function <U, R>(role_to_string: (role: R) => string) :
 
 let changePassword = function <U, R>(changeApi: (changeData: ChangeData) => C<ApiResult>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (_: AuthState<U, R>) => C<AuthState<U, R>>{
     return (role_to_string: (role: R) => string) => initAuthState =>
-        repeat<AuthState<U, R>>()(
+        repeat<AuthState<U, R>>('changepassword_repeat')(
             any<AuthState<U, R>, AuthState<U, R>>('reset_form')([
                 authS => inner_changePassword()({password: "", newPassword: "", newPasswordConfirmation: ""}).then(undefined, changeData => {
                     return button<AuthState<U, R>>("Change password", false, "reset_button")(authS).then(undefined, authS =>
@@ -114,7 +114,7 @@ let changePassword = function <U, R>(changeApi: (changeData: ChangeData) => C<Ap
                     )
                 })
             ])
-        )(initAuthState).filter((newState) => initAuthState.kind != newState.kind)
+        )(initAuthState).filter((newState) => initAuthState.kind != newState.kind, 'changepassword_filter')
     }
 
 let inner_changePassword = function () : (_: ChangeData) => C<ChangeData> {
@@ -142,7 +142,7 @@ let loggedin = function <U, R>(logoutApi: (loginData: LoginData<R>) => C<void>, 
 
 let register = function <U, R>(registerApi: (registerData: RegisterData<R>) => C<ApiResult>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>>{
     return (role_to_string: (role: R) => string) => (roles: R[]) => initAuthState =>
-        repeat<AuthState<U, R>>()(        
+        repeat<AuthState<U, R>>('register_repeat')(        
             any<AuthState<U, R>, AuthState<U, R>>('register_form')([
                 inner_register<U, R>(role_to_string)(roles),
                 ld => button<AuthState<U, R>>("Register", false, "register_button")(ld).then(undefined, ld =>
@@ -158,7 +158,7 @@ let register = function <U, R>(registerApi: (registerData: RegisterData<R>) => C
                         })),
                 ld => a<AuthState<U, R>>("Back to login", null, null, false, "back_to_login")({ ...ld, kind: "login"})                    
             ])
-        )(initAuthState).filter((newState) => initAuthState.kind != newState.kind)
+        )(initAuthState).filter((newState) => initAuthState.kind != newState.kind, 'register_filter')
 }
 
 let inner_register = function <U, R>(role_to_string: (role: R) => string) : (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>> {
