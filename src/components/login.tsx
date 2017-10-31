@@ -53,7 +53,7 @@ let resetPasswordRequest = function <U, R>(requestResetApi: (loginData: LoginDat
                 inner_login<U, R>(role_to_string)(roles)(false),
                 ld => button<AuthState<U, R>>("Request reset", false, "request_reset_button")(ld).then(undefined, ld =>
                     requestResetApi(ld.loginState).then(undefined, result => {
-                        result == "success" ? messageHandler("reset_success") : messageHandler("reset_failed")
+                        result == "success" ? messageHandler("request_reset_success") : messageHandler("request_reset_failed")
                         return unit<AuthState<U, R>>(ld)
                     })
                 ),
