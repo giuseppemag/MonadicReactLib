@@ -135,7 +135,7 @@ let inner_changePassword = function () : (_: ChangeData) => C<ChangeData> {
 let loggedin = function <U, R>(logoutApi: (loginData: LoginData<R>) => C<void>, messageHandler: (message: string) => void) : (_: AuthState<U, R>) => C<AuthState<U, R>> {
     return any<AuthState<U, R>, AuthState<U, R>>('logout_form')([
         ld => a<AuthState<U, R>>("Logout", null, "nofollow", false, "logout_link")(ld).then("logout_api_call", ld => logoutApi(ld.loginState)).then(undefined, _ =>
-            unit<AuthState<U, R>>({...ld, kind: "login", user: none(), loginState: {email: null, password: null, role: null}})),
+            unit<AuthState<U, R>>({...ld, kind: "login", user: none(), loginState: {email: "", password: "", role: null}})),
         ld => a<AuthState<U, R>>("Change password", null, "nofollow", false, "change_password_link")(ld).then("change_password_kind", _ => unit<AuthState<U, R>>({...ld, kind: "changepassword"}))        
     ])
 }
