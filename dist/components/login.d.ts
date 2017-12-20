@@ -5,6 +5,7 @@ export declare type LoginData<R> = {
     role: R;
 };
 export declare type ResetData<R> = {
+    email: string;
     new_password: string;
     new_password_confirm: string;
     role: R;

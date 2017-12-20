@@ -1,7 +1,7 @@
 import { a, any, button, C, div, label, none, Option, repeat, retract, selector, string, some, unit } from 'monadic_react'
 
 export type LoginData<R> = { email: string, password: string, role: R }
-export type ResetData<R> = { new_password: string, new_password_confirm: string, role: R, token: string }
+export type ResetData<R> = { email: string, new_password: string, new_password_confirm: string, role: R, token: string }
 export type RegisterData<R> = { username: string, email: string, emailConfirmation: string, password: string, passwordConfirmation: string, role: R}
 export type ChangeData = { password: string, newPassword: string, newPasswordConfirmation: string }
 export type ApiResult = "success" | "failure"
