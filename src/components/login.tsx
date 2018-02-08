@@ -5,23 +5,23 @@ export type ResetData<R> = { email: string, new_password: string, new_password_c
 export type RegisterData<R> = { username: string, email: string, emailConfirmation: string, password: string, passwordConfirmation: string, role: R}
 export type ChangeData = { password: string, newPassword: string, newPasswordConfirmation: string }
 export type ApiResult = "success" | "failure"
-export type ApiRegisterResult<U> = {status: "failure"} | {status: "success", user: Option<U>}
+export type ApiResultWithMessage<U> = {status: "failure", message: string} | {status: "success", user: U}
 export type AuthState<U, R> = { kind: "login" | "requestreset" | "reset" | "register" | "changepassword" | "loggedin", loginState: LoginData<R>, resetState: ResetData<R>, registerState: RegisterData<R>, user: Option<U> }
 export type AuthResult<U, R> = {role: R, user: Option<U>}
 
-let login = function <U, R>(loginApi: (loginData: LoginData<R>) => C<Option<U>>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>>{
+let login = function <U, R>(loginApi: (loginData: LoginData<R>) => C<ApiResultWithMessage<U>>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>>{
     return (role_to_string: (role: R) => string) => (roles: R[]) => initAuthState =>
         repeat<AuthState<U, R>>('login_repeat')(
             any<AuthState<U, R>, AuthState<U, R>>('login_form')([
                 inner_login<U, R>(role_to_string)(roles)(true),
                 ld => button<AuthState<U, R>>("Login", false, "login_button")(ld).then(undefined, ld =>
                         loginApi(ld.loginState).then(undefined, u => {
-                            if (u.kind == "none") {
-                                messageHandler("login_failed")
-                                return unit<AuthState<U, R>>(ld)
+                            if (u.status == "failure") {
+                                messageHandler(u.message)
+                                return unit<AuthState<U, R>>({...ld, user: none()})
                             }
 
-                            return unit<AuthState<U, R>>({...ld, user: u, kind: "loggedin"})
+                            return unit<AuthState<U, R>>({...ld, user: some(u.user), kind: "loggedin"})
                         })),
                 ld => ld.resetState != null ? a<AuthState<U, R>>("Forgot password?", null, null, false,  "forgot_password")({ ...ld, kind: "requestreset"}) : unit<AuthState<U, R>>(null).never(),
                 ld => ld.registerState != null ? a<AuthState<U, R>>("Create an account", null, null, false,  "register")({ ...ld, kind: "register"}) : unit<AuthState<U, R>>(null).never()
@@ -141,7 +141,7 @@ let loggedin = function <U, R>(logoutApi: (loginData: LoginData<R>) => C<void>, 
     ])
 }
 
-let register = function <U, R>(registerApi: (registerData: RegisterData<R>) => C<ApiRegisterResult<U>>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>>{
+let register = function <U, R>(registerApi: (registerData: RegisterData<R>) => C<ApiResultWithMessage<U>>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>>{
     return (role_to_string: (role: R) => string) => (roles: R[]) => initAuthState =>
         repeat<AuthState<U, R>>('register_repeat')(        
             any<AuthState<U, R>, AuthState<U, R>>('register_form')([
@@ -149,13 +149,13 @@ let register = function <U, R>(registerApi: (registerData: RegisterData<R>) => C
                 ld => button<AuthState<U, R>>("Register", false, "register_button")(ld).then(undefined, ld =>
                         registerApi(ld.registerState).then(undefined, result => {
                             if (result.status == "failure") {
-                                messageHandler("register_failed")
+                                messageHandler(result.message)
 
-                                return unit<AuthState<U, R>>({...ld, kind: "register"})
+                                return unit<AuthState<U, R>>({...ld, user: none(), kind: "register"})
                             }
 
                             messageHandler("register_success")
-                            return unit<AuthState<U, R>>({...ld, kind: "login", user: result.user})
+                            return unit<AuthState<U, R>>({...ld, kind: "login", user: some(result.user)})
                         })),
                 ld => a<AuthState<U, R>>("Back to login", null, null, false, "back_to_login")({ ...ld, kind: "login"})                    
             ])
@@ -187,7 +187,7 @@ let inner_register = function <U, R>(role_to_string: (role: R) => string) : (rol
         )
 }
 
-export let Authenticate = function <U, R>(loginApi: (loginData: LoginData<R>) => C<Option<U>>, logoutApi: (loginData: LoginData<R>) => C<void>, registerApi: (registerData: RegisterData<R>) => C<ApiRegisterResult<U>>, requestResetApi: (loginData: LoginData<R>) => C<ApiResult>, resetApi: (resetData: ResetData<R>) => C<ApiResult>, changeApi: (changeData: ChangeData) => C<ApiResult>, messageHandler: (message: string) => void) {
+export let Authenticate = function <U, R>(loginApi: (loginData: LoginData<R>) => C<ApiResultWithMessage<U>>, logoutApi: (loginData: LoginData<R>) => C<void>, registerApi: (registerData: RegisterData<R>) => C<ApiResultWithMessage<U>>, requestResetApi: (loginData: LoginData<R>) => C<ApiResult>, resetApi: (resetData: ResetData<R>) => C<ApiResult>, changeApi: (changeData: ChangeData) => C<ApiResult>, messageHandler: (message: string) => void) {
     return (role_to_string: (role: R) => string) => (roles: R[]) =>
         repeat<AuthState<U, R>>('authenticate')(
             any<AuthState<U, R>, AuthState<U, R>>('authenticate_wrapper')([
