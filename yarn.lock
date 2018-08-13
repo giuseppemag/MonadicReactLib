@@ -1992,8 +1992,8 @@ moment@2.18.1:
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.18.1.tgz#c36193dd3ce1c2eed2adb7c802dbbc77a81b1c0f"
 
 monadic_react@^1.0.59:
-  version "1.1.9"
-  resolved "https://registry.yarnpkg.com/monadic_react/-/monadic_react-1.1.9.tgz#be9dac76004472af3f8f78c773c709a9fc14b861"
+  version "1.1.12"
+  resolved "https://registry.yarnpkg.com/monadic_react/-/monadic_react-1.1.12.tgz#ab01c70c3a02d3c65f0d60b5e2a1b23590cbaef5"
   dependencies:
     "@types/draft-js" "^0.10.10"
     "@types/i18next" "2.3.35"
