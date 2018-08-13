@@ -1,6 +1,6 @@
 {
   "name": "monadic_react_lib",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Extended library for Monadic React",
   "main": "dist/monadic_react_lib.js",
   "typings": "dist/monadic_react_lib.d.ts",
