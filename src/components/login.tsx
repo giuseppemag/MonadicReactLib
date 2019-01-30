@@ -2,11 +2,12 @@ import { a, any, button, C, div, label, none, Option, repeat, retract, selector,
 
 export type LoginData<R> = { email: string, password: string, role: R }
 export type ResetData<R> = { email: string, new_password: string, new_password_confirm: string, role: R, token: string }
+export type InviteData<R> = { username: string, firstname: string, lastname: string, email: string, emailConfirmation: string, role: R}
 export type RegisterData<R> = { username: string, email: string, emailConfirmation: string, password: string, passwordConfirmation: string, role: R}
 export type ChangeData = { password: string, newPassword: string, newPasswordConfirmation: string }
 export type ApiResult = "success" | "failure"
 export type ApiResultWithMessage<U> = {status: "failure", message: string} | {status: "success", user: U}
-export type AuthState<U, R> = { kind: "login" | "requestreset" | "reset" | "register" | "changepassword" | "loggedin", loginState: LoginData<R>, resetState: ResetData<R>, registerState: RegisterData<R>, user: Option<U> }
+export type AuthState<U, R> = { kind: "login" | "requestreset" | "reset" | "invite" | "register" | "changepassword" | "loggedin", loginState: LoginData<R>, resetState: ResetData<R>, inviteState: InviteData<R>, registerState: RegisterData<R>, user: Option<U> }
 export type AuthResult<U, R> = {role: R, user: Option<U>}
 
 let login = function <U, R>(loginApi: (loginData: LoginData<R>) => C<ApiResultWithMessage<U>>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>>{
@@ -141,6 +142,51 @@ let loggedin = function <U, R>(logoutApi: (loginData: LoginData<R>) => C<void>, 
     ])
 }
 
+let invite = function <U, R>(inviteApi: (inviteData: InviteData<R>) => C<ApiResultWithMessage<U>>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>>{
+    return (role_to_string: (role: R) => string) => (roles: R[]) => initAuthState =>
+        repeat<AuthState<U, R>>('invite_repeat')(        
+            any<AuthState<U, R>, AuthState<U, R>>('invite_form')([
+                inner_invite<U, R>(role_to_string)(roles),
+                ld => button<AuthState<U, R>>("Invite", false, "invite_button")(ld).then(undefined, ld =>
+                        inviteApi(ld.inviteState).then(undefined, result => {
+                            if (result.status == "failure") {
+                                messageHandler(result.message)
+
+                                return unit<AuthState<U, R>>({...ld, user: none(), kind: "invite"})
+                            }
+
+                            messageHandler("invite_success")
+                            return unit<AuthState<U, R>>({...ld, kind: "login", user: some(result.user)})
+                        })),
+            ])
+        )(initAuthState).filter((newState) => initAuthState.kind != newState.kind, 'invite_filter')
+}
+
+let inner_invite = function <U, R>(role_to_string: (role: R) => string) : (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>> {
+    return (roles: R[]) =>
+        repeat<AuthState<U, R>>("inner_invite_repeat")(
+            any<AuthState<U, R>, AuthState<U, R>>("inner_invite_any")([
+                retract<AuthState<U, R>, string>("username_retract")(authState => authState.inviteState.username, authState => v => ({ ...authState, inviteState: {...authState.inviteState, username: v}}),
+                    label<string, string>("Username", true, null, "username_label")(string("edit", "text", "username_input"))),
+                
+                retract<AuthState<U, R>, string>("firstname_retract")(authState => authState.inviteState.firstname, authState => v => ({ ...authState, inviteState: {...authState.inviteState, firstname: v}}),
+                    label<string, string>("First name", true, null, "firstname_label")(string("edit", "text", "firstname_input"))),
+
+                retract<AuthState<U, R>, string>("lastname_retract")(authState => authState.inviteState.lastname, authState => v => ({ ...authState, inviteState: {...authState.inviteState, lastname: v}}),
+                    label<string, string>("Last name", true, null, "lastname_label")(string("edit", "text", "lastname_input"))),
+
+                retract<AuthState<U, R>, string>("email_retract")(authState => authState.inviteState.email, authState => v => ({ ...authState, inviteState: {...authState.inviteState, email: v}}),
+                    label<string, string>("Email", true, null, "email_label")(string("edit", "email", "email_input"))),
+
+                retract<AuthState<U, R>, string>("emailconfirm_retract")(authState => authState.inviteState.emailConfirmation, authState => v => ({ ...authState, inviteState: {...authState.inviteState, emailConfirmation: v}}),
+                    label<string, string>("Confirm email", true, null, "emailconfirm_label")(string("edit", "email", "emailconfirm_input"))),
+
+                retract<AuthState<U, R>, R>('role_retract')(authState => authState.inviteState.role, authState => v => ({ ...authState, inviteState: {...authState.inviteState, role: v}}),
+                    label<R, R>("Role", true, null, "role_label")(r => selector<R>("dropdown", role_to_string, "role_selector")(roles, r))),
+            ])
+        )
+}
+
 let register = function <U, R>(registerApi: (registerData: RegisterData<R>) => C<ApiResultWithMessage<U>>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>>{
     return (role_to_string: (role: R) => string) => (roles: R[]) => initAuthState =>
         repeat<AuthState<U, R>>('register_repeat')(        
@@ -187,7 +233,7 @@ let inner_register = function <U, R>(role_to_string: (role: R) => string) : (rol
         )
 }
 
-export let Authenticate = function <U, R>(loginApi: (loginData: LoginData<R>) => C<ApiResultWithMessage<U>>, logoutApi: (loginData: LoginData<R>) => C<void>, registerApi: (registerData: RegisterData<R>) => C<ApiResultWithMessage<U>>, requestResetApi: (loginData: LoginData<R>) => C<ApiResult>, resetApi: (resetData: ResetData<R>) => C<ApiResult>, changeApi: (changeData: ChangeData) => C<ApiResult>, messageHandler: (message: string) => void) {
+export let Authenticate = function <U, R>(loginApi: (loginData: LoginData<R>) => C<ApiResultWithMessage<U>>, logoutApi: (loginData: LoginData<R>) => C<void>, registerApi: (registerData: RegisterData<R>) => C<ApiResultWithMessage<U>>, inviteApi: (inviteData: InviteData<R>) => C<ApiResultWithMessage<U>>, requestResetApi: (loginData: LoginData<R>) => C<ApiResult>, resetApi: (resetData: ResetData<R>) => C<ApiResult>, changeApi: (changeData: ChangeData) => C<ApiResult>, messageHandler: (message: string) => void) {
     return (role_to_string: (role: R) => string) => (roles: R[]) =>
         repeat<AuthState<U, R>>('authenticate')(
             any<AuthState<U, R>, AuthState<U, R>>('authenticate_wrapper')([
@@ -202,7 +248,9 @@ export let Authenticate = function <U, R>(loginApi: (loginData: LoginData<R>) =>
                         resetPassword<U, R>(resetApi, messageHandler)(role_to_string)(roles)(ld)
                     : ld.kind == "changepassword" ? 
                         changePassword<U, R>(changeApi, messageHandler)(role_to_string)(ld)
-                    : register<U, R>(registerApi, messageHandler)(role_to_string)(roles)(ld)
+                    : ld.kind == "register" ? 
+                        register<U, R>(registerApi, messageHandler)(role_to_string)(roles)(ld)
+                    : invite<U, R>(inviteApi, messageHandler)(role_to_string)(roles)(ld)
             ])
         )
 }
