@@ -233,7 +233,27 @@ let inner_register = function <U, R>(role_to_string: (role: R) => string) : (rol
         )
 }
 
-export let Authenticate = function <U, R>(loginApi: (loginData: LoginData<R>) => C<ApiResultWithMessage<U>>, logoutApi: (loginData: LoginData<R>) => C<void>, registerApi: (registerData: RegisterData<R>) => C<ApiResultWithMessage<U>>, inviteApi: (inviteData: InviteData<R>) => C<ApiResultWithMessage<U>>, requestResetApi: (loginData: LoginData<R>) => C<ApiResult>, resetApi: (resetData: ResetData<R>) => C<ApiResult>, changeApi: (changeData: ChangeData) => C<ApiResult>, messageHandler: (message: string) => void) {
+export let Authenticate = function <U, R>(loginApi: (loginData: LoginData<R>) => C<ApiResultWithMessage<U>>, logoutApi: (loginData: LoginData<R>) => C<void>, registerApi: (registerData: RegisterData<R>) => C<ApiResultWithMessage<U>>, requestResetApi: (loginData: LoginData<R>) => C<ApiResult>, resetApi: (resetData: ResetData<R>) => C<ApiResult>, changeApi: (changeData: ChangeData) => C<ApiResult>, messageHandler: (message: string) => void) {
+    return (role_to_string: (role: R) => string) => (roles: R[]) =>
+        repeat<AuthState<U, R>>('authenticate')(
+            any<AuthState<U, R>, AuthState<U, R>>('authenticate_wrapper')([
+                ld =>
+                    ld.kind == "login" ?
+                        login<U, R>(loginApi, messageHandler)(role_to_string)(roles)(ld)
+                    : ld.kind == "loggedin" ?
+                        loggedin<U, R>(logoutApi, messageHandler)(ld)
+                    : ld.kind == "requestreset" ?
+                        resetPasswordRequest<U, R>(requestResetApi, messageHandler)(role_to_string)(roles)(ld)
+                    : ld.kind == "reset" ? 
+                        resetPassword<U, R>(resetApi, messageHandler)(role_to_string)(roles)(ld)
+                    : ld.kind == "changepassword" ? 
+                        changePassword<U, R>(changeApi, messageHandler)(role_to_string)(ld)
+                    : register<U, R>(registerApi, messageHandler)(role_to_string)(roles)(ld)
+            ])
+        )
+  }
+
+export let AuthenticateWithInvitationFlow = function <U, R>(loginApi: (loginData: LoginData<R>) => C<ApiResultWithMessage<U>>, logoutApi: (loginData: LoginData<R>) => C<void>, registerApi: (registerData: RegisterData<R>) => C<ApiResultWithMessage<U>>, inviteApi: (inviteData: InviteData<R>) => C<ApiResultWithMessage<U>>, requestResetApi: (loginData: LoginData<R>) => C<ApiResult>, resetApi: (resetData: ResetData<R>) => C<ApiResult>, changeApi: (changeData: ChangeData) => C<ApiResult>, messageHandler: (message: string) => void) {
     return (role_to_string: (role: R) => string) => (roles: R[]) =>
         repeat<AuthState<U, R>>('authenticate')(
             any<AuthState<U, R>, AuthState<U, R>>('authenticate_wrapper')([
