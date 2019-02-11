@@ -7,7 +7,7 @@ export type RegisterData<R> = { username: string, email: string, emailConfirmati
 export type ChangeData = { password: string, newPassword: string, newPasswordConfirmation: string }
 export type ApiResult = "success" | "failure"
 export type ApiResultWithMessage<U> = {status: "failure", message: string} | {status: "success", user: U}
-export type AuthState<U, R> = { kind: "login" | "requestreset" | "reset" | "invite" | "register" | "changepassword" | "loggedin", loginState: LoginData<R>, resetState: ResetData<R>, inviteState: InviteData<R>, registerState: RegisterData<R>, user: Option<U> }
+export type AuthState<U, R> = { kind: "login" | "requestreset" | "reset" | "invite" | "register" | "changepassword" | "loggedin", loginState: LoginData<R>, resetState: ResetData<R>, inviteState?: InviteData<R>, registerState: RegisterData<R>, user: Option<U> }
 export type AuthResult<U, R> = {role: R, user: Option<U>}
 
 let login = function <U, R>(loginApi: (loginData: LoginData<R>) => C<ApiResultWithMessage<U>>, messageHandler: (message: string) => void) : (role_To_string: (role: R) => string) => (roles: R[]) => (_: AuthState<U, R>) => C<AuthState<U, R>>{

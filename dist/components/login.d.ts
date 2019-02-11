@@ -44,7 +44,7 @@ export declare type AuthState<U, R> = {
     kind: "login" | "requestreset" | "reset" | "invite" | "register" | "changepassword" | "loggedin";
     loginState: LoginData<R>;
     resetState: ResetData<R>;
-    inviteState: InviteData<R>;
+    inviteState?: InviteData<R>;
     registerState: RegisterData<R>;
     user: Option<U>;
 };
